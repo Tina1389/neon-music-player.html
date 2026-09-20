@@ -1,0 +1,1739 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پخش‌کننده موسیقی نئونی</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --ink: #070713;
+      --ink-soft: #111126;
+      --glass: rgba(19, 21, 52, 0.66);
+      --line: rgba(147, 121, 255, 0.34);
+      --cyan: #45e9ff;
+      --violet: #a675ff;
+      --pink: #ff4fcf;
+      --white: #f4f1ff;
+      --muted: #b6b3d8;
+      --danger: #ff7da7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background: var(--ink);
+    }
+
+    body {
+      width: 100%;
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--white);
+      font-family: "Vazirmatn", sans-serif;
+      background: #070713;
+    }
+
+    button,
+    input {
+      font-family: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    .seek-track:focus-visible {
+      outline: 3px solid var(--cyan);
+      outline-offset: 4px;
+    }
+
+    .neon-app {
+      width: 100%;
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 18px;
+      overflow: hidden;
+      isolation: isolate;
+
+      background:
+        radial-gradient(
+          circle at 14% 16%,
+          rgba(113, 59, 255, .31),
+          transparent 31%
+        ),
+        radial-gradient(
+          circle at 88% 83%,
+          rgba(255, 45, 186, .23),
+          transparent 28%
+        ),
+        radial-gradient(
+          circle at 73% 9%,
+          rgba(44, 220, 255, .1),
+          transparent 24%
+        ),
+        linear-gradient(
+          135deg,
+          #070713 0%,
+          #0c0b25 47%,
+          #11081e 100%
+        );
+    }
+
+    .neon-app::before,
+    .neon-app::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      z-index: -1;
+      border-radius: 999px;
+      filter: blur(4px);
+      animation: drift 13s ease-in-out infinite alternate;
+    }
+
+    .neon-app::before {
+      width: 340px;
+      height: 340px;
+      top: -130px;
+      left: 7%;
+      background: rgba(83, 80, 255, .13);
+    }
+
+    .neon-app::after {
+      width: 300px;
+      height: 300px;
+      right: -95px;
+      bottom: -105px;
+      background: rgba(255, 53, 188, .12);
+      animation-delay: -5s;
+    }
+
+    .music-card {
+      width: min(900px, 100%);
+      position: relative;
+      padding: clamp(22px, 4vw, 46px);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 32px;
+      background: var(--glass);
+
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.03) inset,
+        0 0 45px rgba(117, 83, 255, .20),
+        0 28px 80px rgba(0, 0, 0, .45);
+
+      backdrop-filter: blur(22px);
+      animation: rise .7s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    .music-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: .55;
+
+      background-image:
+        linear-gradient(
+          rgba(255,255,255,.025) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          90deg,
+          rgba(255,255,255,.025) 1px,
+          transparent 1px
+        );
+
+      background-size: 28px 28px;
+      mask-image: linear-gradient(to bottom, black, transparent 75%);
+    }
+
+    .player-header {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 25px;
+    }
+
+    .sound-orb {
+      width: 62px;
+      height: 62px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+
+      border: 1px solid rgba(119, 245, 255, .65);
+      border-radius: 20px;
+
+      color: #07101f;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--cyan),
+          #8c77ff 55%,
+          var(--pink)
+        );
+
+      box-shadow:
+        0 0 25px rgba(69, 233, 255, .48);
+    }
+
+    .sound-orb svg {
+      width: 30px;
+      height: 30px;
+    }
+
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--cyan);
+      font-size: .76rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+    }
+
+    .header-copy h1 {
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    .header-copy p {
+      max-width: 620px;
+      margin: 9px 0 0;
+      line-height: 1.9;
+    }
+
+    .upload-zone {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-height: 79px;
+      padding: 14px;
+
+      border: 1px dashed rgba(113, 220, 255, .38);
+      border-radius: 19px;
+
+      background: rgba(4, 6, 25, .4);
+
+      transition:
+        border-color .2s ease,
+        background .2s ease,
+        transform .2s ease;
+    }
+
+    .upload-zone:hover {
+      border-color: rgba(69, 233, 255, .82);
+      background: rgba(26, 20, 62, .56);
+    }
+
+    .file-button,
+    .action-button,
+    .mute-button,
+    .reset-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 46px;
+      border-radius: 14px;
+      font-weight: 700;
+
+      transition:
+        transform .2s ease,
+        box-shadow .2s ease,
+        filter .2s ease,
+        opacity .2s ease;
+    }
+
+    .file-button {
+      flex: 0 0 auto;
+      padding: 11px 16px;
+      color: #08091c;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--cyan),
+          #a07bff
+        );
+
+      box-shadow:
+        0 8px 25px rgba(69, 233, 255, .22);
+    }
+
+    .file-button:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+
+    .file-name-wrap {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .file-name {
+      display: block;
+      overflow: hidden;
+      color: #e9e6ff;
+      font-size: .91rem;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .status {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .status.success {
+      color: #79f5d0;
+    }
+
+    .visualizer-shell {
+      position: relative;
+      height: clamp(190px, 31vw, 280px);
+      margin: 23px 0;
+      overflow: hidden;
+
+      border: 1px solid rgba(120, 108, 255, .35);
+      border-radius: 22px;
+
+      background:
+        radial-gradient(
+          circle at 50% 50%,
+          rgba(124, 79, 255, .14),
+          transparent 55%
+        ),
+        #08091c;
+
+      box-shadow:
+        inset 0 0 38px rgba(10, 7, 43, .9),
+        0 0 26px rgba(92, 53, 255, .11);
+    }
+
+    .visualizer-shell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+
+      background:
+        linear-gradient(
+          90deg,
+          rgba(69,233,255,.05),
+          transparent 30%,
+          transparent 70%,
+          rgba(255,79,207,.05)
+        );
+    }
+
+    #visualizer {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .seek-row {
+      display: grid;
+      grid-template-columns: 54px 1fr 54px;
+      align-items: center;
+      gap: 11px;
+      direction: ltr;
+    }
+
+    .time-value {
+      color: #d9d5f8;
+      font-family: "Space Mono", monospace;
+      font-size: .77rem;
+      text-align: center;
+    }
+
+    .seek-track {
+      height: 9px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(199, 190, 255, .17);
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    .seek-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+
+      background:
+        linear-gradient(
+          90deg,
+          var(--cyan),
+          var(--violet),
+          var(--pink)
+        );
+
+      box-shadow: 0 0 13px var(--pink);
+      transition: width .1s linear;
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 11px;
+      margin-top: 23px;
+      flex-wrap: wrap;
+    }
+
+    .action-button {
+      min-width: 135px;
+      padding: 11px 19px;
+      color: #0a0920;
+
+      background:
+        linear-gradient(
+          135deg,
+          #b28bff,
+          var(--pink)
+        );
+
+      box-shadow:
+        0 9px 27px rgba(207, 80, 255, .25);
+    }
+
+    .action-button.playing {
+      background:
+        linear-gradient(
+          135deg,
+          #6cf7ff,
+          #8f82ff
+        );
+    }
+
+    .action-button:hover:not(:disabled),
+    .mute-button:hover,
+    .reset-button:hover {
+      transform: translateY(-2px);
+    }
+
+    .action-button:disabled {
+      opacity: .36;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .mute-button,
+    .reset-button {
+      width: 46px;
+      padding: 0;
+      color: #e6e1ff;
+
+      border: 1px solid rgba(184, 168, 255, .25);
+      background: rgba(255,255,255,.06);
+    }
+
+    .mute-button:hover,
+    .reset-button:hover {
+      border-color: rgba(69, 233, 255, .7);
+      background: rgba(69, 233, 255, .12);
+    }
+
+    .volume-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 22px;
+      padding: 13px 15px;
+      border-top: 1px solid rgba(194, 183, 255, .15);
+    }
+
+    .volume-label {
+      flex: 0 0 auto;
+      color: #cbc6ec;
+      font-size: .83rem;
+      font-weight: 600;
+    }
+
+    #volume-control {
+      width: 100%;
+      accent-color: var(--cyan);
+      cursor: pointer;
+    }
+
+    .volume-percent {
+      width: 38px;
+      direction: ltr;
+      color: var(--cyan);
+      font-family: "Space Mono", monospace;
+      font-size: .72rem;
+      text-align: left;
+    }
+
+    .hidden-input {
+      display: none;
+    }
+
+    .hidden-state {
+      display: none !important;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes drift {
+      from {
+        transform: translate3d(-8px, 4px, 0) scale(.95);
+      }
+
+      to {
+        transform: translate3d(24px, -16px, 0) scale(1.08);
+      }
+    }
+
+    @media (max-width: 580px) {
+      .neon-app {
+        padding: 16px 12px;
+        align-items: flex-start;
+      }
+
+      .music-card {
+        border-radius: 24px;
+        padding: 22px 17px;
+      }
+
+      .player-header {
+        gap: 12px;
+      }
+
+      .sound-orb {
+        width: 51px;
+        height: 51px;
+        border-radius: 16px;
+      }
+
+      .upload-zone {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .file-button {
+        width: 100%;
+      }
+
+      .seek-row {
+        grid-template-columns: 43px 1fr 43px;
+        gap: 7px;
+      }
+
+      .controls-row {
+        gap: 8px;
+      }
+
+      .action-button {
+        min-width: 118px;
+        padding-inline: 13px;
+      }
+    }
+  </style>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"
+    type="text/javascript">
+  </script>
+</head>
+
+<body>
+  <div class="neon-app">
+
+    <main class="music-card" aria-labelledby="player-title">
+
+      <header class="player-header">
+
+        <div class="sound-orb" aria-hidden="true">
+          <i data-lucide="audio-lines"></i>
+        </div>
+
+        <div class="header-copy">
+
+          <p class="eyebrow">
+            صدا در مدار نئون
+          </p>
+
+          <h1 id="player-title">
+            پخش‌کننده موسیقی نئونی
+          </h1>
+
+          <p>
+            فایل موسیقی دلخواهتان را انتخاب کنید،
+            سپس با موج زنده و رنگارنگ به آن گوش دهید.
+          </p>
+
+        </div>
+      </header>
+
+      <section
+        class="upload-zone"
+        aria-label="انتخاب فایل موسیقی">
+
+        <input
+          id="file-input"
+          class="hidden-input"
+          type="file"
+          accept=".mp3,.wav,audio/mpeg,audio/wav,audio/x-wav">
+
+        <button
+          id="file-button"
+          class="file-button"
+          type="button">
+
+          <i
+            data-lucide="folder-music"
+            aria-hidden="true">
+          </i>
+
+          <span>
+            انتخاب فایل موسیقی
+          </span>
+
+        </button>
+
+        <div class="file-name-wrap">
+
+          <span
+            id="file-name"
+            class="file-name">
+            هنوز فایلی انتخاب نشده است
+          </span>
+
+          <span
+            id="status-message"
+            class="status"
+            aria-live="polite">
+            برای شروع، یک فایل MP3 یا WAV انتخاب کنید.
+          </span>
+
+        </div>
+
+      </section>
+
+      <section
+        class="visualizer-shell"
+        aria-label="نمایش موج صوتی زنده">
+
+        <canvas
+          id="visualizer"
+          aria-label="موج صوتی زنده">
+        </canvas>
+
+      </section>
+
+      <section
+        class="seek-row"
+        aria-label="موقعیت پخش">
+
+        <time
+          id="current-time"
+          class="time-value"
+          datetime="PT0M0S">
+          ۰:۰۰
+        </time>
+
+        <div
+          id="seek-track"
+          class="seek-track"
+          role="slider"
+          tabindex="0"
+          aria-label="جابه‌جایی در آهنگ"
+          aria-valuemin="0"
+          aria-valuemax="0"
+          aria-valuenow="0">
+
+          <div
+            id="seek-fill"
+            class="seek-fill">
+          </div>
+
+        </div>
+
+        <time
+          id="duration-time"
+          class="time-value"
+          datetime="PT0M0S">
+          ۰:۰۰
+        </time>
+
+      </section>
+
+      <section
+        class="controls-row"
+        aria-label="کنترل‌های پخش">
+
+        <button
+          id="play-button"
+          class="action-button"
+          type="button"
+          disabled>
+
+          <i
+            data-lucide="play"
+            aria-hidden="true">
+          </i>
+
+          <span>پخش</span>
+
+        </button>
+
+        <button
+          id="stop-button"
+          class="action-button"
+          type="button"
+          disabled>
+
+          <i
+            data-lucide="square"
+            aria-hidden="true">
+          </i>
+
+          <span>توقف</span>
+
+        </button>
+
+        <button
+          id="mute-button"
+          class="mute-button"
+          type="button"
+          aria-label="بی‌صدا کردن"
+          aria-pressed="false">
+
+          <i
+            id="volume-icon"
+            data-lucide="volume-2"
+            aria-hidden="true">
+          </i>
+
+        </button>
+
+        <button
+          id="reset-button"
+          class="reset-button"
+          type="button"
+          aria-label="بازنشانی">
+
+          <i
+            data-lucide="rotate-ccw"
+            aria-hidden="true">
+          </i>
+
+        </button>
+
+      </section>
+
+      <section
+        class="volume-area"
+        aria-label="کنترل صدا">
+
+        <label
+          id="volume-label"
+          class="volume-label"
+          for="volume-control">
+          میزان صدا
+        </label>
+
+        <input
+          id="volume-control"
+          type="range"
+          min="0"
+          max="100"
+          value="75"
+          aria-labelledby="volume-label">
+
+        <output
+          id="volume-percent"
+          class="volume-percent"
+          for="volume-control">
+          ۷۵٪
+        </output>
+
+      </section>
+
+      <audio
+        id="audio-player"
+        preload="metadata">
+      </audio>
+
+    </main>
+  </div>
+
+  <script>
+    (() => {
+
+      const audio =
+        document.getElementById("audio-player");
+
+      const fileInput =
+        document.getElementById("file-input");
+
+      const fileButton =
+        document.getElementById("file-button");
+
+      const fileName =
+        document.getElementById("file-name");
+
+      const statusMessage =
+        document.getElementById("status-message");
+
+      const playButton =
+        document.getElementById("play-button");
+
+      const stopButton =
+        document.getElementById("stop-button");
+
+      const muteButton =
+        document.getElementById("mute-button");
+
+      const resetButton =
+        document.getElementById("reset-button");
+
+      const volumeControl =
+        document.getElementById("volume-control");
+
+      const volumePercent =
+        document.getElementById("volume-percent");
+
+      const currentTimeEl =
+        document.getElementById("current-time");
+
+      const durationTimeEl =
+        document.getElementById("duration-time");
+
+      const seekTrack =
+        document.getElementById("seek-track");
+
+      const seekFill =
+        document.getElementById("seek-fill");
+
+      const canvas =
+        document.getElementById("visualizer");
+
+      const ctx =
+        canvas.getContext("2d");
+
+      let objectUrl = null;
+      let audioContext = null;
+      let analyser = null;
+      let sourceNode = null;
+      let dataArray = null;
+      let animationFrame = null;
+      let isSeeking = false;
+
+      const faNumber =
+        new Intl.NumberFormat("fa-IR", {
+          useGrouping: false
+        });
+
+      function formatTime(seconds) {
+
+        if (
+          !Number.isFinite(seconds) ||
+          seconds < 0
+        ) {
+          return "۰:۰۰";
+        }
+
+        const minutes =
+          Math.floor(seconds / 60);
+
+        const remaining =
+          Math.floor(seconds % 60);
+
+        return `${faNumber.format(minutes)}:${faNumber
+          .format(remaining)
+          .padStart(2, "۰")}`;
+      }
+
+      function setStatus(message, type = "") {
+
+        statusMessage.textContent = message;
+
+        statusMessage.className =
+          `status${type ? ` ${type}` : ""}`;
+      }
+
+      function updateButtons() {
+
+        const ready =
+          Boolean(audio.src);
+
+        playButton.disabled = !ready;
+
+        stopButton.disabled =
+          !ready || audio.paused;
+
+        playButton.classList.toggle(
+          "playing",
+          !audio.paused
+        );
+      }
+
+      async function ensureAudioGraph() {
+
+        if (!audioContext) {
+
+          const AudioCtx =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+          if (!AudioCtx) {
+
+            setStatus(
+              "مرورگر شما از تحلیل موج صوتی پشتیبانی نمی‌کند.",
+              "error"
+            );
+
+            return false;
+          }
+
+          audioContext =
+            new AudioCtx();
+
+          analyser =
+            audioContext.createAnalyser();
+
+          analyser.fftSize = 2048;
+
+          analyser.smoothingTimeConstant =
+            0.82;
+
+          dataArray =
+            new Uint8Array(
+              analyser.fftSize
+            );
+
+          sourceNode =
+            audioContext.createMediaElementSource(audio);
+
+          sourceNode.connect(analyser);
+
+          analyser.connect(
+            audioContext.destination
+          );
+        }
+
+        if (
+          audioContext.state === "suspended"
+        ) {
+          await audioContext.resume();
+        }
+
+        return true;
+      }
+
+      function resizeCanvas() {
+
+        const rect =
+          canvas.getBoundingClientRect();
+
+        const ratio =
+          Math.min(
+            window.devicePixelRatio || 1,
+            2
+          );
+
+        canvas.width =
+          Math.max(
+            1,
+            Math.floor(rect.width * ratio)
+          );
+
+        canvas.height =
+          Math.max(
+            1,
+            Math.floor(rect.height * ratio)
+          );
+
+        ctx.setTransform(
+          ratio,
+          0,
+          0,
+          ratio,
+          0,
+          0
+        );
+
+        drawWave();
+      }
+
+      function drawIdleWave(width, height) {
+
+        const gradient =
+          ctx.createLinearGradient(
+            0,
+            0,
+            width,
+            0
+          );
+
+        gradient.addColorStop(
+          0,
+          "#45e9ff"
+        );
+
+        gradient.addColorStop(
+          .5,
+          "#a675ff"
+        );
+
+        gradient.addColorStop(
+          1,
+          "#ff4fcf"
+        );
+
+        ctx.beginPath();
+
+        for (
+          let x = 0;
+          x <= width;
+          x += 3
+        ) {
+
+          const y =
+            height / 2 +
+            Math.sin(x * .034) * 8 +
+            Math.sin(x * .013) * 5;
+
+          x === 0
+            ? ctx.moveTo(x, y)
+            : ctx.lineTo(x, y);
+        }
+
+        ctx.strokeStyle =
+          gradient;
+
+        ctx.lineWidth = 2;
+
+        ctx.shadowColor =
+          "#a675ff";
+
+        ctx.shadowBlur = 16;
+
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+      }
+
+      function drawWave() {
+
+        const rect =
+          canvas.getBoundingClientRect();
+
+        const width = rect.width;
+        const height = rect.height;
+
+        ctx.clearRect(
+          0,
+          0,
+          width,
+          height
+        );
+
+        const backdrop =
+          ctx.createRadialGradient(
+            width / 2,
+            height / 2,
+            4,
+            width / 2,
+            height / 2,
+            width * .62
+          );
+
+        backdrop.addColorStop(
+          0,
+          "rgba(120, 80, 255, .12)"
+        );
+
+        backdrop.addColorStop(
+          1,
+          "rgba(5, 6, 20, 0)"
+        );
+
+        ctx.fillStyle =
+          backdrop;
+
+        ctx.fillRect(
+          0,
+          0,
+          width,
+          height
+        );
+
+        if (
+          !analyser ||
+          audio.paused
+        ) {
+          drawIdleWave(
+            width,
+            height
+          );
+
+          return;
+        }
+
+        analyser.getByteTimeDomainData(
+          dataArray
+        );
+
+        const gradient =
+          ctx.createLinearGradient(
+            0,
+            0,
+            width,
+            0
+          );
+
+        gradient.addColorStop(
+          0,
+          "#45e9ff"
+        );
+
+        gradient.addColorStop(
+          .48,
+          "#9c79ff"
+        );
+
+        gradient.addColorStop(
+          1,
+          "#ff4fcf"
+        );
+
+        ctx.beginPath();
+
+        const sliceWidth =
+          width /
+          (dataArray.length - 1);
+
+        for (
+          let i = 0;
+          i < dataArray.length;
+          i++
+        ) {
+
+          const x =
+            i * sliceWidth;
+
+          const normalized =
+            dataArray[i] / 128;
+
+          const y =
+            (normalized * height) / 2;
+
+          i === 0
+            ? ctx.moveTo(x, y)
+            : ctx.lineTo(x, y);
+        }
+
+        ctx.lineWidth = 2.5;
+
+        ctx.strokeStyle =
+          gradient;
+
+        ctx.shadowColor =
+          "#bc6dff";
+
+        ctx.shadowBlur = 20;
+
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+      }
+
+      function renderLoop() {
+
+        drawWave();
+
+        animationFrame =
+          requestAnimationFrame(
+            renderLoop
+          );
+      }
+
+      function startVisualization() {
+
+        if (!animationFrame) {
+          renderLoop();
+        }
+      }
+
+      function stopVisualization() {
+
+        if (animationFrame) {
+
+          cancelAnimationFrame(
+            animationFrame
+          );
+
+          animationFrame = null;
+        }
+
+        drawWave();
+      }
+
+      function updateProgress() {
+
+        const duration =
+          audio.duration;
+
+        const current =
+          audio.currentTime;
+
+        const percent =
+          duration &&
+          Number.isFinite(duration)
+            ? (current / duration) * 100
+            : 0;
+
+        seekFill.style.width =
+          `${Math.min(
+            100,
+            Math.max(0, percent)
+          )}%`;
+
+        currentTimeEl.textContent =
+          formatTime(current);
+
+        durationTimeEl.textContent =
+          formatTime(duration);
+
+        seekTrack.setAttribute(
+          "aria-valuemax",
+          String(
+            Number.isFinite(duration)
+              ? Math.floor(duration)
+              : 0
+          )
+        );
+
+        seekTrack.setAttribute(
+          "aria-valuenow",
+          String(
+            Math.floor(current || 0)
+          )
+        );
+      }
+
+      function setSeekPosition(clientX) {
+
+        if (
+          !Number.isFinite(audio.duration) ||
+          audio.duration <= 0
+        ) {
+          return;
+        }
+
+        const rect =
+          seekTrack.getBoundingClientRect();
+
+        const ratio =
+          Math.min(
+            1,
+            Math.max(
+              0,
+              (clientX - rect.left) /
+                rect.width
+            )
+          );
+
+        audio.currentTime =
+          ratio * audio.duration;
+
+        updateProgress();
+      }
+
+      function resetPlayer() {
+
+        audio.pause();
+
+        audio.removeAttribute("src");
+
+        audio.load();
+
+        if (objectUrl) {
+
+          URL.revokeObjectURL(
+            objectUrl
+          );
+
+          objectUrl = null;
+        }
+
+        fileInput.value = "";
+
+        fileName.textContent =
+          "هنوز فایلی انتخاب نشده است";
+
+        currentTimeEl.textContent =
+          "۰:۰۰";
+
+        durationTimeEl.textContent =
+          "۰:۰۰";
+
+        seekFill.style.width =
+          "0%";
+
+        seekTrack.setAttribute(
+          "aria-valuemax",
+          "0"
+        );
+
+        seekTrack.setAttribute(
+          "aria-valuenow",
+          "0"
+        );
+
+        setStatus(
+          "برای شروع، یک فایل MP3 یا WAV انتخاب کنید."
+        );
+
+        updateButtons();
+
+        stopVisualization();
+      }
+
+      fileButton.addEventListener(
+        "click",
+        () => fileInput.click()
+      );
+
+      fileInput.addEventListener(
+        "change",
+        async () => {
+
+          const file =
+            fileInput.files &&
+            fileInput.files[0];
+
+          if (!file) return;
+
+          const validTypes = [
+            "audio/mpeg",
+            "audio/mp3",
+            "audio/wav",
+            "audio/x-wav"
+          ];
+
+          const validExtension =
+            /\.(mp3|wav)$/i.test(
+              file.name
+            );
+
+          if (
+            !validTypes.includes(file.type) &&
+            !validExtension
+          ) {
+
+            fileInput.value = "";
+
+            setStatus(
+              "فقط فایل‌های MP3 و WAV قابل انتخاب هستند.",
+              "error"
+            );
+
+            return;
+          }
+
+          audio.pause();
+
+          if (objectUrl) {
+            URL.revokeObjectURL(
+              objectUrl
+            );
+          }
+
+          const graphReady =
+            await ensureAudioGraph();
+
+          if (!graphReady) return;
+
+          objectUrl =
+            URL.createObjectURL(file);
+
+          audio.src = objectUrl;
+
+          audio.load();
+
+          fileName.textContent =
+            file.name;
+
+          currentTimeEl.textContent =
+            "۰:۰۰";
+
+          durationTimeEl.textContent =
+            "۰:۰۰";
+
+          seekFill.style.width =
+            "0%";
+
+          setStatus(
+            "فایل آماده است؛ برای پخش دکمه پخش را بزنید.",
+            "success"
+          );
+
+          updateButtons();
+
+          drawWave();
+        }
+      );
+
+      playButton.addEventListener(
+        "click",
+        async () => {
+
+          if (!audio.src) {
+
+            setStatus(
+              "ابتدا یک فایل موسیقی انتخاب کنید.",
+              "error"
+            );
+
+            return;
+          }
+
+          const graphReady =
+            await ensureAudioGraph();
+
+          if (!graphReady) return;
+
+          try {
+
+            if (audio.ended) {
+              audio.currentTime = 0;
+            }
+
+            await audio.play();
+
+            setStatus(
+              "در حال پخش موسیقی.",
+              "success"
+            );
+
+            updateButtons();
+
+            startVisualization();
+
+          } catch {
+
+            setStatus(
+              "پخش فایل ممکن نشد. لطفاً فایل دیگری انتخاب کنید.",
+              "error"
+            );
+
+            updateButtons();
+          }
+        }
+      );
+
+      stopButton.addEventListener(
+        "click",
+        () => {
+
+          audio.pause();
+
+          audio.currentTime = 0;
+
+          updateProgress();
+
+          setStatus(
+            "پخش متوقف شد."
+          );
+
+          updateButtons();
+
+          stopVisualization();
+        }
+      );
+
+      resetButton.addEventListener(
+        "click",
+        resetPlayer
+      );
+
+      muteButton.addEventListener(
+        "click",
+        () => {
+
+          audio.muted =
+            !audio.muted;
+
+          muteButton.setAttribute(
+            "aria-pressed",
+            String(audio.muted)
+          );
+
+          muteButton.setAttribute(
+            "aria-label",
+            audio.muted
+              ? "فعال کردن صدا"
+              : "بی‌صدا کردن"
+          );
+
+          const oldIcon =
+            document.getElementById(
+              "volume-icon"
+            );
+
+          const icon =
+            document.createElement("i");
+
+          icon.id =
+            "volume-icon";
+
+          icon.dataset.lucide =
+            audio.muted
+              ? "volume-x"
+              : "volume-2";
+
+          oldIcon.replaceWith(icon);
+
+          lucide.createIcons();
+        }
+      );
+
+      volumeControl.addEventListener(
+        "input",
+        () => {
+
+          audio.volume =
+            Number(
+              volumeControl.value
+            ) / 100;
+
+          if (
+            audio.volume > 0 &&
+            audio.muted
+          ) {
+            audio.muted = false;
+          }
+
+          volumePercent.textContent =
+            `${faNumber.format(
+              volumeControl.value
+            )}٪`;
+        }
+      );
+
+      seekTrack.addEventListener(
+        "pointerdown",
+        (event) => {
+
+          isSeeking = true;
+
+          seekTrack.setPointerCapture(
+            event.pointerId
+          );
+
+          setSeekPosition(
+            event.clientX
+          );
+        }
+      );
+
+      seekTrack.addEventListener(
+        "pointermove",
+        (event) => {
+
+          if (isSeeking) {
+            setSeekPosition(
+              event.clientX
+            );
+          }
+        }
+      );
+
+      seekTrack.addEventListener(
+        "pointerup",
+        (event) => {
+
+          isSeeking = false;
+
+          if (
+            seekTrack.hasPointerCapture(
+              event.pointerId
+            )
+          ) {
+            seekTrack.releasePointerCapture(
+              event.pointerId
+            );
+          }
+        }
+      );
+
+      seekTrack.addEventListener(
+        "keydown",
+        (event) => {
+
+          if (
+            !Number.isFinite(
+              audio.duration
+            )
+          ) {
+            return;
+          }
+
+          if (
+            event.key === "ArrowRight" ||
+            event.key === "ArrowUp"
+          ) {
+
+            event.preventDefault();
+
+            audio.currentTime =
+              Math.min(
+                audio.duration,
+                audio.currentTime + 5
+              );
+          }
+
+          if (
+            event.key === "ArrowLeft" ||
+            event.key === "ArrowDown"
+          ) {
+
+            event.preventDefault();
+
+            audio.currentTime =
+              Math.max(
+                0,
+                audio.currentTime - 5
+              );
+          }
+
+          updateProgress();
+        }
+      );
+
+      audio.addEventListener(
+        "loadedmetadata",
+        () => {
+
+          updateProgress();
+
+          setStatus(
+            "فایل بارگذاری شد و آماده پخش است.",
+            "success"
+          );
+
+          updateButtons();
+        }
+      );
+
+      audio.addEventListener(
+        "timeupdate",
+        updateProgress
+      );
+
+      audio.addEventListener(
+        "play",
+        () => {
+
+          updateButtons();
+
+          startVisualization();
+        }
+      );
+
+      audio.addEventListener(
+        "pause",
+        () => {
+
+          updateButtons();
+
+          if (!audio.ended) {
+            stopVisualization();
+          }
+        }
+      );
+
+      audio.addEventListener(
+        "ended",
+        () => {
+
+          audio.currentTime = 0;
+
+          updateProgress();
+
+          setStatus(
+            "آهنگ به پایان رسید؛ می‌توانید دوباره پخش کنید."
+          );
+
+          updateButtons();
+
+          stopVisualization();
+        }
+      );
+
+      audio.addEventListener(
+        "error",
+        () => {
+
+          setStatus(
+            "خواندن این فایل ممکن نیست. لطفاً فایل دیگری انتخاب کنید.",
+            "error"
+          );
+
+          updateButtons();
+
+          stopVisualization();
+        }
+      );
+
+      window.addEventListener(
+        "resize",
+        resizeCanvas
+      );
+
+      document.addEventListener(
+        "DOMContentLoaded",
+        () => {
+
+          audio.volume = .75;
+
+          resizeCanvas();
+
+          updateButtons();
+
+          lucide.createIcons();
+        }
+      );
+
+    })();
+  </script>
+
+</body>
+</html>
